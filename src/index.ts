@@ -33,6 +33,8 @@ document.body.appendChild(game.view);
 
 class square extends PIXI.Sprite {
 
+        private _nextSquareY:boolean = false;
+
     constructor(x:number, y: number, color:number) {
         super();
         this.anchor.set(0.5);
@@ -42,10 +44,16 @@ class square extends PIXI.Sprite {
         this.position.x = x;       
         this.position.y = y;        
         this.tint = color;         
-        this.interactive = true;
-
-       
+        this.interactive = true;       
     }
+
+        public get nextSquareY() {
+            return this._nextSquareY;
+        }
+
+        public set nextSquareY(value:boolean) {
+            this._nextSquareY = value;
+        }
 }
 
 class board extends PIXI.Container {
@@ -111,25 +119,57 @@ class board extends PIXI.Container {
 
     public setCollisionSquares():void {        
         this._collisionSquares = this.children.filter((item:any) => this.children.some((item2:any) => this._checkCollisionSquares(item, item2)));
+        //this.children.forEach((item:any) => )
     }
 
     public destroySquares():void {
         this._collisionSquares.forEach((item:any) => this.removeChild(item));
     }
+/*
+    public checkNextSquareByY(object1:square, object2:square):boolean {
+        return (object1.position.x === object2.position.x && (object2.position.y - object1.position.y) === object2.height);
+    }
+*/
+    public checkNextSquareByY(object:square) {
+        this.children.filter((item:any) => object.position.x === item.position.x).forEach((item:any) => 
+                {                   
 
+                    if ((item.position.y - object.position.y) === object.height) object.nextSquareY = true;
+                    else object.nextSquareY = false;
+                }
+       
+            )
+        };
 
+    public XXXX(object:square) {
+
+        return this.children.some((item:any) => item.x === object.x && (item.y - object.y) === object.height);
+    }
 }
 
 const moving = () => {
     gameScene.setCollisionSquares();
+    
     gameScene.destroySquares();
+    
+    gameScene.children.slice(1).forEach((item:any) => {
+
+
+        if (((item.position.y + item.height/2) < gameScene.height) && !gameScene.XXXX(item)) {     
+      
+            item.position.y +=1;            
+        }
+    }
+    );
 }
 
 const gameScene = new board;
 
-console.log(gameScene);
 
-game.ticker.add(() => moving());
+
+//game.ticker.add(() => moving());
+game.ticker.add(moving);
+
 
 game.stage.addChild(gameScene);
 
@@ -137,6 +177,6 @@ game.stage.addChild(gameScene);
 gameScene.startGame();
 
 
-
+console.log(gameScene);
 
 
