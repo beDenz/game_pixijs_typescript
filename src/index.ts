@@ -33,8 +33,6 @@ document.body.appendChild(game.view);
 
 class square extends PIXI.Sprite {
 
-        private _nextSquareY:boolean = false;
-
     constructor(x:number, y: number, color:number) {
         super();
         this.anchor.set(0.5);
@@ -47,21 +45,14 @@ class square extends PIXI.Sprite {
         this.interactive = true;       
     }
 
-        public get nextSquareY() {
-            return this._nextSquareY;
-        }
-
-        public set nextSquareY(value:boolean) {
-            this._nextSquareY = value;
-        }
 }
 
 class board extends PIXI.Container {
 
     private _gameSceneBackground:PIXI.Graphics = new PIXI.Graphics().beginFill(0x383535).drawRect(0,0, 800, 800).endFill();
     
-    private _activeSpriteArray:any = [];
-    private _collisionSquares:any = [];
+    private _activeSpriteArray:any = []; // буфер, содержит активные объекты
+    private _collisionSquares:any = []; // буфер, содержит одинаковые "соседние" объекты 
 
     constructor() {
         super();
@@ -74,20 +65,51 @@ class board extends PIXI.Container {
     }
 
     private _setBackground() {
+        
+        /*
+            Метод, устанавливает фон
+            TODO: возможно есть решение по-лучше, но пока так. 
+        */
         this.addChild(this._gameSceneBackground);
     }
 
     public startGame():void { 
-        for (let row = 50; row < 800; row+=100) {
-            for (let col = 50; col < 800; col+=100) {
+       
+        /*
+            Фунция заполнения доски, при старте игры.
+        */
+
+        for (let row = 50; row < 800; row+=100) { // строки
+            for (let col = 50; col < 800;) {    // столбцы
                 const sprite = new square(row, col , colorMatrix[randomInt(0,5)]);
-                sprite.on("click",this._onChangePosition, this);   
-                this.addChild(sprite);             
-            }
+                sprite.on("click",this._onChangePosition, this);           
+                
+                /*
+                    Так как функция рандомного выбора цвета работает не идеально, 
+                    чтобы не допустисть на старте игры нескольких одинаковых обьекта
+                    рядом, делаю проверку его соседей, и если цвета не совпадают - то 
+                    объект добавляется.
+                */
+
+                if (!this.children.slice(1).some((item:any) => 
+
+                    item.tint === sprite.tint && // цвет 
+                    ((item.y === sprite.y && Math.abs(item.x - sprite.x) === item.width) || // соседи по вертикали
+                    (item.x === sprite.x && Math.abs(item.y - sprite.y) === item.height)))) { // соседи по горизонтали
+
+                        this.addChild(sprite); 
+                        col+=100;                        
+                    } 
+              }
         }
     }
 
     private _moveSquare(object1:square, object2:square):void {
+
+        /*
+            Функция смены позиций выбранных объектов.
+            Проверяеться "соседство".
+        */
 
         if (object1.position.y === object2.position.y && Math.abs(object1.position.x - object2.position.x) === object1.width || 
             object1.position.x === object2.position.x && Math.abs(object1.position.y - object2.position.y) === object2.height)  {
@@ -103,6 +125,12 @@ class board extends PIXI.Container {
     }
 
     private _onChangePosition(event:PIXI.interaction.InteractionEvent):void {
+
+        /*
+            Обработка нажатия клавиши на объект.
+            Используеться буфер _activeSpriteArray для временного хранения активных обьектов.
+        */
+
         this._activeSpriteArray = [...this._activeSpriteArray, event.currentTarget];
         
         if (this._activeSpriteArray.length === 2) {        
@@ -114,35 +142,33 @@ class board extends PIXI.Container {
     }
 
     private _checkCollisionSquares(object1:square, object2:square):boolean {
+        
+        /*
+            Медод для проверки "соседства"
+        */
         return object1.tint === object2.tint && (object1.position.y === object2.position.y && Math.abs(object1.position.x - object2.position.x) === object1.width || object1.position.x === object2.position.x && Math.abs(object1.position.y - object2.position.y) === object2.height);
     }
 
-    public setCollisionSquares():void {        
+    public setCollisionSquares():void {
+        
+        /*
+            Метод добавляет одинаковые "соседние" объекты в буфер _collisionSquares.
+        */
         this._collisionSquares = this.children.filter((item:any) => this.children.some((item2:any) => this._checkCollisionSquares(item, item2)));
-        //this.children.forEach((item:any) => )
     }
 
     public destroySquares():void {
+        /*
+            Метод обходит буфер _collisionSquares и "уничтожает" обьекты
+        */
         this._collisionSquares.forEach((item:any) => this.removeChild(item));
     }
-/*
-    public checkNextSquareByY(object1:square, object2:square):boolean {
-        return (object1.position.x === object2.position.x && (object2.position.y - object1.position.y) === object2.height);
-    }
-*/
+
     public checkNextSquareByY(object:square) {
-        this.children.filter((item:any) => object.position.x === item.position.x).forEach((item:any) => 
-                {                   
-
-                    if ((item.position.y - object.position.y) === object.height) object.nextSquareY = true;
-                    else object.nextSquareY = false;
-                }
-       
-            )
-        };
-
-    public XXXX(object:square) {
-
+        
+        /*
+            Метод определяющий наличе "соседа" снизу
+        */
         return this.children.some((item:any) => item.x === object.x && (item.y - object.y) === object.height);
     }
 }
@@ -154,9 +180,12 @@ const moving = () => {
     
     gameScene.children.slice(1).forEach((item:any) => {
 
+        /*
+            Приводим объекты в движение. 
+            Проверяем нижнюю границу и "соседство снизу"
+        */
 
-        if (((item.position.y + item.height/2) < gameScene.height) && !gameScene.XXXX(item)) {     
-      
+        if (((item.position.y + item.height/2) < gameScene.height) && !gameScene.checkNextSquareByY(item)) {     
             item.position.y +=1;            
         }
     }
@@ -165,15 +194,8 @@ const moving = () => {
 
 const gameScene = new board;
 
-
-
-//game.ticker.add(() => moving());
 game.ticker.add(moving);
-
-
 game.stage.addChild(gameScene);
-
-
 gameScene.startGame();
 
 
