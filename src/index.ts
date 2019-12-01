@@ -36,7 +36,7 @@ PIXI.utils.isWebGLSupported() ? game = createGameWebGL() : game = createGameCanv
 */
 
 type colorMatrixConfig = number;
-const colorMatrix:colorMatrixConfig[] = [0xff0000, 0x00ff00, 0xff00ff, 0xcccc00, 0x009933, 0xb300b3];
+const colorMatrix:colorMatrixConfig[] = [0xff0000, 0x00ff00, 0xff00ff, 0xcccc00, 0x009933, 0xb300b3, 0x4287f5];
 
 
 document.body.appendChild(game.view);
@@ -92,7 +92,7 @@ class board extends PIXI.Container {
 
         for (let row = 50; row < 800; row+=100) { // строки
             for (let col = 50; col < 800;) {    // столбцы
-                const sprite = new square(row, col , colorMatrix[randomInt(0,5)]);
+                const sprite = new square(row, col , colorMatrix[randomInt(0,6)]);
                 sprite.on("click",this._onChangePosition, this);           
                 
                 /*
@@ -102,12 +102,7 @@ class board extends PIXI.Container {
                     объект добавляется.
                 */
 
-                if (!this.children.slice(1).some((item:any) => 
-
-                    item.tint === sprite.tint && // цвет 
-                    ((item.y === sprite.y && Math.abs(item.x - sprite.x) === item.width) || // соседи по вертикали
-                    (item.x === sprite.x && Math.abs(item.y - sprite.y) === item.height)))) { // соседи по горизонтали
-
+                if (!this._checkSameObjects(sprite)) { 
                         this.addChild(sprite); 
                         col+=100;                        
                     } 
@@ -120,20 +115,24 @@ class board extends PIXI.Container {
 
             if ( !this.children.some((item:any) => item.x === row && item.y < 150)) {
 
-            const sprite = new square(row, 50 , colorMatrix[randomInt(0,5)]);
+                const sprite = new square(row, 50 , colorMatrix[randomInt(0,6)]);
                 sprite.on("click",this._onChangePosition, this);
 
-            if (!this.children.slice(1).some((item:any) => 
-                    item.tint === sprite.tint && // цвет 
-                    ((item.y === sprite.y && Math.abs(item.x - sprite.x) === item.width) || // соседи по вертикали
-                    (item.x === sprite.x && Math.abs(item.y - sprite.y) === item.height)))) {
+                if (!this._checkSameObjects(sprite)) {
                 
-                this.addChild(sprite);
-            }
+                    this.addChild(sprite);
+                }
 
             }
 
         }
+    }
+
+    private _checkSameObjects(object:square, defaultObject:PIXI.DisplayObject[] = this.children):boolean {
+        return defaultObject.some((item:any) =>
+                item.tint === object.tint && // цвет 
+                ((item.y === object.y && Math.abs(item.x - object.x) === item.width) || 
+                (item.x === object.x && Math.abs(item.y - object.y) === item.height)));
     }
 
     private _moveSquare(object1:square, object2:square):void {
@@ -161,16 +160,25 @@ class board extends PIXI.Container {
         /*
             Обработка нажатия клавиши на объект.
             Используеться буфер _activeSpriteArray для временного хранения активных обьектов.
+            После перемещения проводим проверку на то уничтожиться обьект или нет, если отрицательно
+            то возвращаем обратно.
+            В дальнейшем можно добавить анимацию.
         */
 
         this._activeSpriteArray = [...this._activeSpriteArray, event.currentTarget];
         
-        if (this._activeSpriteArray.length === 2) {        
+        if (this._activeSpriteArray.length === 2) {   
+            
             this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);
+
+            if (!this._checkSameObjects(this._activeSpriteArray[0]) && !this._checkSameObjects(this._activeSpriteArray[1])) {
+                  this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);  
+            }
             
             this._activeSpriteArray = [];
+           
         }
-            
+        
     }
 
     private _checkCollisionSquares(object1:square, object2:square):boolean {
@@ -178,17 +186,15 @@ class board extends PIXI.Container {
         /*
             Медод для проверки "соседства"
         */
-        return object1.tint === object2.tint && (object1.position.y === object2.position.y && Math.abs(object1.position.x - object2.position.x) === object1.width || object1.position.x === object2.position.x && Math.abs(object1.position.y - object2.position.y) === object2.height);
+        return object1.tint === object2.tint && (object1.position.y === object2.position.y &&
+               Math.abs(object1.position.x - object2.position.x) === object1.width ||
+               object1.position.x === object2.position.x && Math.abs(object1.position.y - object2.position.y) === object2.height);
     }
 
     public get score():number {
         return this._score;
     }
-/*
-    public set score() {
-        this.score+=1;
-    }
-*/
+
     public setCollisionSquares():void {
         
         /*
@@ -197,14 +203,20 @@ class board extends PIXI.Container {
         this._collisionSquares = this.children.filter((item:any) => this.children.some((item2:any) => this._checkCollisionSquares(item, item2)));
     }
 
+
     public destroySquares():void {
         /*
             Метод обходит буфер _collisionSquares и "уничтожает" обьекты
-        */
-        this._collisionSquares.forEach((item:any) => {
-            this.removeChild(item);
-            this._score++;
-        });
+        */       
+
+        this._collisionSquares
+            .map((item:any) => [item, ...this._collisionSquares.filter((object:any) => this._checkCollisionSquares(object, item))])
+            .forEach((item:any) => {
+                                if (item.length > 2) {
+                                    this._score += item.length;
+                                    item.forEach((object:any) => this.removeChild(object));  
+                                }                
+                        });    
     }
 
     public checkNextSquareByY(object:square) {
@@ -217,9 +229,44 @@ class board extends PIXI.Container {
 }
 
 class info extends PIXI.Container {
-    constructor() {
+
+    private _infoBackground:PIXI.Graphics = new PIXI.Graphics().beginFill(0x383535).drawRect(0,0, 300, 300).endFill();
+    private _title:PIXI.Text = new PIXI.Text(`Info`,{fontFamily : 'Arial', fontSize: 42, fill : 0xffffff});
+    private _scoreInfo:PIXI.Text = new PIXI.Text("Score:",{fontFamily : 'Arial', fontSize: 22, fill : 0xffffff});
+
+    constructor(score:any) {
         super();
+        this.x = 1000;
+        this.y = 100;
+        this.height = 300;
+        this.width = 300;
+        this._setBackground();
+
+        
+        this._setTitle();
+        this._title.x = this.width/2 - this._title.width/2 ;
+        this._title.y = 50;
+
+        // Инициализация блока показа очков (количество уничтоженых объектов)
+
+        this.addChild(this._scoreInfo);
+        this._scoreInfo.x = this.width/2 - this._scoreInfo.width/2;
+        this._scoreInfo.y = this._title.y + 100;
+
+
     }
+
+    private _setBackground() {
+        
+        this.addChild(this._infoBackground);
+    }
+    private _setTitle() {
+        this.addChild(this._title);
+    }
+
+    public set scoreInfo(score:any) {
+        this._scoreInfo.text = "Score: " + score.toString();
+   }
 }
 
 const moving = () => {
@@ -240,13 +287,18 @@ const moving = () => {
         }
     }
     );
-    console.log(gameScene.score);
+
+    infoScene.scoreInfo = gameScene.score;
+   
 }
 
 const gameScene = new board;
+const infoScene = new info(gameScene.score);
 
 game.ticker.add(moving);
+//game.ticker.maxFPS = 0.5;
 game.stage.addChild(gameScene);
+game.stage.addChild(infoScene);
 gameScene.startGame();
 
 
