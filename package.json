@@ -13,8 +13,11 @@
   "devDependencies": {
     "@babel/core": "^7.7.4",
     "@babel/preset-env": "^7.7.4",
+    "@types/node": "^12.12.14",
     "@types/pixi.js": "^5.0.0",
     "babel-loader": "^8.0.6",
+    "file-loader": "^5.0.2",
+    "pixi-sound": "^3.0.4",
     "pixi.js-legacy": "^5.2.0",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.2",

@@ -18,12 +18,16 @@ module.exports = {
             presets: ['ES2015', 'env']
           }
         }
-      }
+      },
+      {
+        test: /\.mp3$/,
+        //exclude: /node_modules/,
+        use: 'file-loader'
+    }
     ],
   },
   resolve: {
-    //modules: ['node_modules', path.resolve(__dirname, '/')],
-    extensions: [ '.ts', '.js', `.tsx` ]
+     extensions: [ '.ts', '.js', `.mp3` ]
   },
   output: {
     filename: 'index.js',
