@@ -21,3 +21,18 @@ export default function start():void {
     document.body.appendChild(myGame.view);    
 }
 
+export interface getTimeConfig {
+    total: number;
+    seconds: number;
+    minutes: number;
+}
+
+export const getTime = (time:Date):getTimeConfig => {
+    
+    const total:number = Date.parse(`${time}`) - Date.parse(`${new Date()}`);
+
+    let seconds:number = Math.floor((total/1000) % 60);
+    let minutes:number = Math.floor((total/1000/60) % 60);
+
+    return {total, seconds, minutes}
+}
