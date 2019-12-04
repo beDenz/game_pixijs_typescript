@@ -9,7 +9,7 @@ export class board extends PIXI.Container {
     
     private _activeSpriteArray:square[] = []; // буфер, содержит активные объекты
     private _collisionSquares:square[] = []; // буфер, содержит одинаковые "соседние" объекты
-    private _score:number = 0; //
+    private _score:number = 0;
     private _destroySound:any;
 
     constructor() {
@@ -27,50 +27,6 @@ export class board extends PIXI.Container {
             Метод, устанавливает фон
         */
         this.addChild(this._gameSceneBackground);
-    }
-
-    public startGame():void { 
-       
-        /*
-            Фунция заполнения доски, при старте игры.
-        */
-
-        for (let row = 50; row < 800; row+=100) { // строки
-            for (let col = 50; col < 800;) {    // столбцы
-                const sprite = new square(row, col , colorMatrix[randomInt(0,6)]);
-                sprite.on("click",this._onChangePosition, this);           
-                
-                /*
-                    Так как функция рандомного выбора цвета работает не идеально, 
-                    чтобы не допустисть на старте игры нескольких одинаковых обьекта
-                    рядом, делаю проверку его соседей, и если цвета не совпадают - то 
-                    объект добавляется.
-                */
-
-                if (!this._checkSameObjects(sprite)) { 
-                        this.addChild(sprite); 
-                        col+=100;                        
-                    } 
-              }
-        }
-    }
-    public playGame():void {
-        
-        for (let row = 50; row < 800; row+=100) {
-
-            if ( !this.children.some((item:any) => item.x === row && item.y < 150)) {
-
-                const sprite = new square(row, 50 , colorMatrix[randomInt(0,6)]);
-                sprite.on("click",this._onChangePosition, this);
-
-                if (!this._checkSameObjects(sprite)) {
-                
-                    this.addChild(sprite);
-                }
-
-            }
-
-        }
     }
 
     private _checkSameObjects(object:square, defaultObject:PIXI.DisplayObject[] = this.children):boolean {
@@ -96,10 +52,7 @@ export class board extends PIXI.Container {
                 object1.position.y = object2.position.y;
 
                 object2.position.x = tempX;
-                object2.position.y = tempY;
-                //this._moveObjectSound();
-                
-              
+                object2.position.y = tempY; 
             }
     }
 
@@ -110,7 +63,6 @@ export class board extends PIXI.Container {
             Используеться буфер _activeSpriteArray для временного хранения активных обьектов.
             После перемещения проводим проверку на то уничтожиться обьект или нет, если отрицательно
             то возвращаем обратно.
-            В дальнейшем можно добавить анимацию.
         */
 
         this._activeSpriteArray = [...this._activeSpriteArray, event.currentTarget as square];
@@ -119,15 +71,17 @@ export class board extends PIXI.Container {
             
             this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);
 
-            if (!this._checkSameObjects(this._activeSpriteArray[0]) && !this._checkSameObjects(this._activeSpriteArray[1])) {
-                  this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);  
-            }
-            
-            this._activeSpriteArray = [];
+            this.setCollisionSquares();   
            
-        }
 
-        
+            if (this._collisionSquares
+                .map((item:any) => [item, ...this._collisionSquares.filter((object:any) =>  this._checkCollisionSquares(object, item))])
+                .filter((item:any) => item.length > 2)
+                .length === 0) this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);
+            
+           this._activeSpriteArray = [];
+          
+        }       
     }
 
     private _checkCollisionSquares(object1:square, object2:square):boolean {
@@ -181,5 +135,75 @@ export class board extends PIXI.Container {
 
     public setDestroySound(object:any):any {
         this._destroySound = object;
+    }
+
+    public moving = ():void => {
+                
+        this.setCollisionSquares();        
+        this.destroySquares();
+        this.playGame();
+        
+        this.children.slice(1).forEach((item:any) => { // Первый элемент - фон, его пропускаем
+    
+            /*
+                Приводим объекты в движение. 
+                Проверяем нижнюю границу и "соседство снизу"
+            */
+    
+            if (((item.position.y + item.height/2) < this.height) && !this.checkNextSquareByY(item)) {     
+                item.position.y +=1;            
+            }
+        }
+        );   
+      
+    }
+    
+    public startGame():void { 
+       
+        /*
+            Фунция заполнения доски, при старте игры.
+        */
+
+        for (let row = 50; row < 800; row+=100) { // строки
+            for (let col = 50; col < 800;) {    // столбцы
+                const sprite = new square(row, col , colorMatrix[randomInt(0,6)]);
+                sprite.on("click",this._onChangePosition, this);           
+                
+                /*
+                    Так как функция рандомного выбора цвета работает не идеально, 
+                    чтобы не допустисть на старте игры нескольких одинаковых обьекта
+                    рядом, делаю проверку его соседей, и если цвета не совпадают - то 
+                    объект добавляется.
+                */
+
+                if (!this._checkSameObjects(sprite)) { 
+                        this.addChild(sprite); 
+                        col+=100;                        
+                    } 
+              }
+        }
+    }
+
+    public playGame():void {
+        
+        /*
+         *  Функция рандомного создания обьектов, во время игры
+         */
+
+        for (let row = 50; row < 800; row+=100) {
+
+            if ( !this.children.some((item:any) => item.x === row && item.y < 150)) {
+
+                const sprite = new square(row, 50 , colorMatrix[randomInt(0,6)]);
+                sprite.on("click",this._onChangePosition, this);
+
+                if (!this._checkSameObjects(sprite)) {
+                
+                    this.addChild(sprite);
+                }
+
+            }
+
+        }
     }
 }
