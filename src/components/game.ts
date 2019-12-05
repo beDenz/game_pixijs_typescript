@@ -25,7 +25,8 @@ export class game extends brouserSupport() {
     public gameOverScene:gameOver;
 
     private _timeInfo:getTimeConfig = {total: 0, minutes:0, seconds:0};
-    private _timer:number = 30000;
+
+    private _timer:number = 30000; // Время таймера, по умолчанию пол минуты
    
     constructor() {
         super(appOptions);
@@ -54,11 +55,11 @@ export class game extends brouserSupport() {
 
     public destroyGame():void {
       
-        this.soundInterfaceScene.stopMusic();            
+        this.soundInterfaceScene.stopMusic();         
         this.destroy(true);
         PIXI.Loader.shared.resources = {};
         //PIXI.Loader.shared.destroy(); // не срабатывает метод уничтожения стейта
-        PIXI.utils.destroyTextureCache();        
+        PIXI.utils.destroyTextureCache();     
     }
 
     private _initClock(time:number):void {
@@ -69,13 +70,13 @@ export class game extends brouserSupport() {
 
     private _updateClock(time:Date, clockInterval:NodeJS.Timer):void { 
               
-               // this._timeInfo = this._getTime(time);
-               this._timeInfo = getTime(time);
-
+                this._timeInfo = getTime(time);
             
                 if (this._timeInfo.total <= 0) {
                     clearInterval(clockInterval);
-                    this.gameOverScene.setVisible();              
+
+                    this.gameOverScene.setVisible();
+                    this.gameScene.interactiveChildren = false;              
                 };
     } 
 }

@@ -18,7 +18,8 @@ export class board extends PIXI.Container {
         this.height = 800;
         this.position.x = 100;
         this.position.y = 100;
-        this._setBackground();       
+        this._setBackground();
+
     }
 
     private _setBackground():void {
@@ -120,6 +121,7 @@ export class board extends PIXI.Container {
                                 if (item.length > 2) {
                                     this._score += item.length;
                                     item.forEach((object:any) => this.removeChild(object));
+                                    
                                     this._destroySound();
                                 }                
                         });    
