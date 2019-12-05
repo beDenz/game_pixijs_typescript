@@ -75,8 +75,8 @@ export class board extends PIXI.Container {
            
 
             if (this._collisionSquares
-                .map((item:any) => [item, ...this._collisionSquares.filter((object:any) =>  this._checkCollisionSquares(object, item))])
-                .filter((item:any) => item.length > 2)
+                .map(item => [item, ...this._collisionSquares.filter(object =>  this._checkCollisionSquares(object, item))])
+                .filter(item => item.length > 2)
                 .length === 0) this._moveSquare(this._activeSpriteArray[0], this._activeSpriteArray[1]);
             
            this._activeSpriteArray = [];
@@ -130,10 +130,10 @@ export class board extends PIXI.Container {
         /*
             Метод определяющий наличе "соседа" снизу
         */
-        return this.children.some((item:any) => item.x === object.x && (item.y - object.y) === object.height);
+        return this.children.some((item:PIXI.DisplayObject) => item.x === object.x && (item.y - object.y) === object.height);
     }
 
-    public setDestroySound(object:any):any {
+    public setDestroySound(object:Function):void {
         this._destroySound = object;
     }
 
@@ -188,6 +188,7 @@ export class board extends PIXI.Container {
         
         /*
          *  Функция рандомного создания обьектов, во время игры
+         *  При создании проверяються соседние объекты на совподения
          */
 
         for (let row = 50; row < 800; row+=100) {

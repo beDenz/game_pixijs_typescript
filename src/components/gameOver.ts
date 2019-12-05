@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
-//import start from "../service/service";
-import start, { getTime, getTimeConfig } from "../service/service";
+import start from "../service/service";
+
+
 export class gameOver extends PIXI.Container {
 
     private _gameOverBackground:PIXI.Graphics = new PIXI.Graphics().beginFill(0x383535).drawRect(0,0, 600, 600).endFill();
@@ -18,7 +19,6 @@ export class gameOver extends PIXI.Container {
         this.x = 350;
         this.y = 150;
         this.visible = false;
-
         
         // Title
         this._title.x = 600/2 - this._title.width/2;
@@ -39,6 +39,7 @@ export class gameOver extends PIXI.Container {
         this._newGameButton.buttonMode = true;
         this._newGameButton.interactive = true;
         this._newGameButton.on('click', this._startNewGame, this);
+
         // Button Text
         this._newGameButtonText.anchor.set(0.5);
         this._newGameButtonText.x = this._newGameButton.width/2;
@@ -57,18 +58,18 @@ export class gameOver extends PIXI.Container {
         this._timeInfo.text = `Your time: ${Math.floor((time/1000/60) % 60)} min ${Math.floor((time/1000) % 60)} sec` ;
     }
 
-   public setVisible():void {
+    public setVisible():void {
        this.visible = !this.visible;
-   } 
+    } 
 
-   private _startNewGame():void {
+    private _startNewGame():void {
         this._destroyApp();
         start();
-   }
+    }
 
-   public set setDestroyApp(object:any) {
+    public set setDestroyApp(object:Function) {
        this._destroyApp = object;       
-   }
+    }
 
 
 } 

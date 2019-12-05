@@ -57,10 +57,8 @@ export class game extends brouserSupport() {
         this.soundInterfaceScene.stopMusic();            
         this.destroy(true);
         PIXI.Loader.shared.resources = {};
-        //PIXI.Loader.shared.destroy(); // Почему то не срабатывает метод уничтожения стейта
-        PIXI.utils.destroyTextureCache();
-        console.log(PIXI.Loader.shared);
-        //game = null;
+        //PIXI.Loader.shared.destroy(); // не срабатывает метод уничтожения стейта
+        PIXI.utils.destroyTextureCache();        
     }
 
     private _initClock(time:number):void {
@@ -79,5 +77,5 @@ export class game extends brouserSupport() {
                     clearInterval(clockInterval);
                     this.gameOverScene.setVisible();              
                 };
-            } 
+    } 
 }
